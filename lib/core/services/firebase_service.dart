@@ -15,8 +15,8 @@ class FirebaseService {
       if (Firebase.apps.isNotEmpty) {
         _isInitialized = true;
       } else {
-        // Attempt default options initialization
-        await Firebase.initializeApp();
+        // Attempt default options initialization with non-blocking timeout
+        await Firebase.initializeApp().timeout(const Duration(seconds: 3));
         _isInitialized = true;
       }
 

@@ -19,9 +19,6 @@ import 'features/workouts/presentation/active_workout_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase and Firestore offline persistence
-  await FirebaseService().initialize();
-
   // Set system bar styles for deep midnight navy theme
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -31,6 +28,10 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
+
+  // Initialize Firebase and Firestore offline persistence asynchronously
+  // so that the first frame paints immediately without blocking main thread
+  FirebaseService().initialize();
 
   runApp(const SetVaultApp());
 }
