@@ -213,3 +213,4 @@ class WorkoutDetailsScreen extends StatelessWidget {
     );
   }
 }
+

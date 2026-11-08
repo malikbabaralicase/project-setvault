@@ -6,8 +6,10 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/background_scaffold.dart';
 import '../../../core/widgets/glass_button.dart';
 import '../../../core/widgets/glass_card.dart';
-import '../../timer/presentation/rest_timer_screen.dart';
+import '../../../data/models/workout_set_model.dart';
+import '../../authentication/presentation/auth_provider.dart';
 import '../../exercises/presentation/exercise_library_screen.dart';
+import '../../timer/presentation/rest_timer_screen.dart';
 import 'active_workout_provider.dart';
 
 class ActiveWorkoutScreen extends StatelessWidget {
@@ -16,6 +18,8 @@ class ActiveWorkoutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ActiveWorkoutProvider>();
+    final auth = context.watch<AuthProvider>();
+    final uid = auth.currentUser?.id ?? 'user_alex_01';
 
     return BackgroundScaffold(
       body: Column(
@@ -52,14 +56,54 @@ class ActiveWorkoutScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Text(
-                      provider.title,
-                      style: AppTypography.headingMedium,
+                    Column(
+                      children: [
+                        Text(
+                          provider.title,
+                          style: AppTypography.headingMedium,
+                        ),
+                        const SizedBox(height: 2),
+                        // Sync Status Indicator
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.deepMidnightNavy.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.glassBorderSubtle,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                provider.syncStatusLabel,
+                                style: AppTypography.labelSmall.copyWith(
+                                  fontSize: 10,
+                                  color: AppColors.cyan,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 36), // Balance back button
+                    const SizedBox(width: 36),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 // Large Live Timer Display
                 GestureDetector(
                   onTap: () => provider.toggleTimer(),
@@ -71,7 +115,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                             ? Icons.pause_circle_outline_rounded
                             : Icons.play_circle_outline_rounded,
                         color: AppColors.cyan,
-                        size: 28,
+                        size: 26,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -81,7 +125,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 // Action Buttons
                 Row(
                   children: [
@@ -96,7 +140,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
                           color: AppColors.primaryWhite,
                         ),
                         onPressed: () {
-                          _showFinishDialog(context, provider);
+                          _showFinishDialog(context, provider, uid);
                         },
                       ),
                     ),
@@ -264,7 +308,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Sets Table Header
           Row(
@@ -311,18 +355,36 @@ class ActiveWorkoutScreen extends StatelessWidget {
 
           // Set Rows
           ...List.generate(ex.sets.length, (setIdx) {
-            final set = ex.sets[setIdx];
+            final WorkoutSetModel set = ex.sets[setIdx];
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4.0),
               child: Row(
                 children: [
-                  // Set Number
+                  // Set Number & Set Type Badge
                   SizedBox(
                     width: 32,
-                    child: Text(
-                      '${set.setNumber}',
-                      style: AppTypography.labelLarge.copyWith(
-                        color: AppColors.mutedBlue,
+                    child: GestureDetector(
+                      onTap: () => _showSetTypeSheet(
+                        context,
+                        provider,
+                        ex.id,
+                        setIdx,
+                        set,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _getSetTypeColor(set.type).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _getSetTypeLabel(set.type, set.setNumber),
+                          textAlign: TextAlign.center,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: _getSetTypeColor(set.type),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -511,6 +573,85 @@ class ActiveWorkoutScreen extends StatelessWidget {
     );
   }
 
+  Color _getSetTypeColor(SetType type) {
+    switch (type) {
+      case SetType.warmup:
+        return AppColors.warning;
+      case SetType.drop:
+        return AppColors.cyan;
+      case SetType.failure:
+        return AppColors.error;
+      case SetType.normal:
+        return AppColors.mutedBlue;
+    }
+  }
+
+  String _getSetTypeLabel(SetType type, int setNumber) {
+    switch (type) {
+      case SetType.warmup:
+        return 'W$setNumber';
+      case SetType.drop:
+        return 'D$setNumber';
+      case SetType.failure:
+        return 'F$setNumber';
+      case SetType.normal:
+        return '$setNumber';
+    }
+  }
+
+  void _showSetTypeSheet(
+    BuildContext context,
+    ActiveWorkoutProvider provider,
+    String exerciseId,
+    int setIndex,
+    WorkoutSetModel set,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.darkNavy,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: AppColors.glassBorder),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Configure Set ${set.setNumber}', style: AppTypography.headingMedium),
+            const SizedBox(height: 14),
+            Text('Set Type', style: AppTypography.labelMedium),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: SetType.values.map((t) {
+                return ChoiceChip(
+                  label: Text(t.name.toUpperCase()),
+                  selected: set.type == t,
+                  selectedColor: AppColors.electricBlue,
+                  onSelected: (_) {
+                    provider.updateSetType(exerciseId, setIndex, t);
+                    Navigator.pop(ctx);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+              title: const Text('Delete This Set', style: TextStyle(color: AppColors.error)),
+              onTap: () {
+                provider.removeSet(exerciseId, setIndex);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAddNoteDialog(
     BuildContext context,
     ActiveWorkoutProvider provider,
@@ -563,6 +704,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
   void _showFinishDialog(
     BuildContext context,
     ActiveWorkoutProvider provider,
+    String uid,
   ) {
     showDialog(
       context: context,
@@ -574,7 +716,7 @@ class ActiveWorkoutScreen extends StatelessWidget {
         ),
         title: Text('Finish Workout?', style: AppTypography.headingMedium),
         content: Text(
-          'Workout duration: ${provider.formattedDuration}\nAll completed sets will be recorded.',
+          'Workout duration: ${provider.formattedDuration}\nAll completed sets will be recorded to your cloud log.',
           style: AppTypography.bodyMedium,
         ),
         actions: [
@@ -586,15 +728,18 @@ class ActiveWorkoutScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.electricBlue,
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Workout finished and saved to History!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
+              await provider.finishWorkout(uid);
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Workout finished and saved!'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
             },
             child: const Text(
               'Save & Finish',
@@ -634,11 +779,14 @@ class ActiveWorkoutScreen extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.refresh_rounded, color: AppColors.warning),
-              title: const Text('Reset Session', style: TextStyle(color: AppColors.primaryWhite)),
-              onTap: () {
-                provider.resetWorkout();
+              leading: const Icon(Icons.cancel_outlined, color: AppColors.error),
+              title: const Text('Discard Workout', style: TextStyle(color: AppColors.error)),
+              onTap: () async {
                 Navigator.pop(ctx);
+                await provider.cancelWorkout();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
               },
             ),
           ],

@@ -10,6 +10,7 @@ import '../../../core/widgets/glass_card.dart';
 import '../../../core/widgets/glass_input.dart';
 import '../../../data/models/workout_routine_model.dart';
 import '../../../data/models/workout_set_model.dart';
+import '../../authentication/presentation/auth_provider.dart';
 import '../../exercises/presentation/exercise_library_screen.dart';
 import '../../timer/presentation/rest_timer_screen.dart';
 import 'routine_provider.dart';
@@ -419,7 +420,10 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
                     type: GlassButtonType.primary,
                     onPressed: () {
                       final provider = context.read<RoutineProvider>();
+                      final auth = context.read<AuthProvider>();
+                      final uid = auth.currentUser?.id ?? 'user_alex_01';
                       provider.addRoutine(
+                        uid,
                         WorkoutRoutineModel(
                           id: 'rt_${DateTime.now().millisecondsSinceEpoch}',
                           title: _titleController.text.toUpperCase(),
@@ -446,3 +450,4 @@ class _CreateRoutineScreenState extends State<CreateRoutineScreen> {
     );
   }
 }
+
