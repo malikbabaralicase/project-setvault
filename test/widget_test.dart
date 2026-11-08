@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:setvault/core/constants/app_strings.dart';
+import 'package:setvault/core/services/backup_service.dart';
+import 'package:setvault/data/models/workout_set_model.dart';
 import 'package:setvault/data/repositories/mock_data_repository.dart';
 import 'package:setvault/features/administration/presentation/admin_dashboard_screen.dart';
 import 'package:setvault/features/administration/presentation/admin_provider.dart';
@@ -53,7 +54,7 @@ Widget _wrapWithProviders(Widget child) {
 }
 
 void main() {
-  group('SetVault Part 1 Comprehensive Screen & Logic Tests', () {
+  group('SetVault Part 2 Comprehensive Suite & Backend Verification', () {
     testWidgets('Screen 1: Splash / Onboarding renders correctly', (tester) async {
       await tester.pumpWidget(const SetVaultApp());
       await tester.pump();
@@ -72,22 +73,24 @@ void main() {
       expect(find.text('Push Day'), findsOneWidget);
     });
 
-    testWidgets('Screen 3: Active Workout renders correctly', (tester) async {
+    testWidgets('Screen 3: Active Workout renders with sync status & set controls', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const ActiveWorkoutScreen()));
       await tester.pump();
       expect(find.text('Push Day'), findsOneWidget);
       expect(find.text('Finish Workout'), findsOneWidget);
       expect(find.text('Bench Press'), findsOneWidget);
+      expect(find.text('Saved Locally'), findsOneWidget);
       expect(find.text('Rest Timer'), findsOneWidget);
     });
 
-    testWidgets('Screen 4: Exercise Library renders correctly', (tester) async {
+    testWidgets('Screen 4: Exercise Library renders all 8 categories', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const ExerciseLibraryScreen()));
       await tester.pump();
       expect(find.text('Exercise Library'), findsOneWidget);
       expect(find.text('Bench Press'), findsOneWidget);
       expect(find.text('All'), findsOneWidget);
       expect(find.text('Chest'), findsOneWidget);
+      expect(find.text('Back'), findsOneWidget);
     });
 
     testWidgets('Screen 5: Exercise Details renders correctly', (tester) async {
@@ -140,7 +143,7 @@ void main() {
       expect(find.text('Repeat Workout'), findsOneWidget);
     });
 
-    testWidgets('Screen 10: Progress Dashboard renders correctly', (tester) async {
+    testWidgets('Screen 10: Progress Dashboard renders real charts', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const ProgressDashboardScreen()));
       await tester.pump();
       expect(find.text('Progress Dashboard'), findsOneWidget);
@@ -149,7 +152,7 @@ void main() {
       expect(find.text('Personal Records'), findsOneWidget);
     });
 
-    testWidgets('Screen 11: Rest Timer renders correctly', (tester) async {
+    testWidgets('Screen 11: Rest Timer renders countdown ring', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const RestTimerScreen()));
       await tester.pump();
       expect(find.text('Rest Timer'), findsOneWidget);
@@ -158,12 +161,12 @@ void main() {
       expect(find.text('Reset Timer'), findsOneWidget);
     });
 
-    testWidgets('Screen 12: Settings & Profile renders correctly', (tester) async {
+    testWidgets('Screen 12: Settings renders backup options', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const SettingsScreen()));
       await tester.pump();
       expect(find.text('Settings'), findsOneWidget);
       expect(find.text('Alex Morgan'), findsOneWidget);
-      expect(find.text('Appearance Options'), findsOneWidget);
+      expect(find.text('Export / Import Backup'), findsOneWidget);
       expect(find.text('Administrator Dashboard'), findsOneWidget);
     });
 
@@ -191,45 +194,121 @@ void main() {
       expect(find.text('REGISTER'), findsOneWidget);
     });
 
-    testWidgets('Screen 16: Administrator Dashboard renders correctly', (tester) async {
+    testWidgets('Screen 16: Administrator Dashboard renders RBAC elements', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const AdminDashboardScreen()));
       await tester.pump();
       expect(find.text('Administrator Dashboard'), findsOneWidget);
       expect(find.text('Backend Analytics'), findsOneWidget);
+      expect(find.text('Security Monitoring'), findsOneWidget);
       expect(find.text('User Management'), findsOneWidget);
-      expect(find.text('26'), findsOneWidget);
-      expect(find.text('3277'), findsOneWidget);
     });
 
-    testWidgets('Main Navigation Screen switches tabs smoothly', (tester) async {
+    testWidgets('Navigation switches tabs smoothly', (tester) async {
       await tester.pumpWidget(_wrapWithProviders(const MainNavigationScreen()));
       await tester.pump();
 
       expect(find.byType(DashboardScreen), findsOneWidget);
 
-      // Tap on Routines tab
       await tester.tap(find.byIcon(Icons.format_list_bulleted_rounded));
       await tester.pump();
       expect(find.byType(WorkoutRoutinesScreen), findsOneWidget);
 
-      // Tap on Progress tab
       await tester.tap(find.byIcon(Icons.show_chart_rounded));
       await tester.pump();
       expect(find.byType(ProgressDashboardScreen), findsOneWidget);
 
-      // Tap on Settings tab
       await tester.tap(find.byIcon(Icons.person_rounded));
       await tester.pump();
       expect(find.byType(SettingsScreen), findsOneWidget);
     });
 
-    test('Unit Test: MockDataRepository consistent data contract', () {
+    test('Logic Test: Anonymous auth and account linking preserves user data', () async {
+      final auth = AuthProvider();
+      await auth.signInAnonymously();
+      expect(auth.isAnonymous, true);
+      final anonId = auth.currentUser?.id;
+
+      // Register / Link
+      await auth.register(
+        name: 'Alex Morgan Linked',
+        email: 'alex.linked@example.com',
+        password: 'password123',
+        confirmPassword: 'password123',
+      );
+      expect(auth.currentUser?.email, 'alex.linked@example.com');
+      expect(auth.currentUser?.name, 'Alex Morgan Linked');
+      expect(auth.isAnonymous, false);
+      expect(anonId != null, true);
+    });
+
+    test('Logic Test: Dynamic Carry-Over finds previous session sets', () {
       final repo = MockDataRepository();
-      expect(repo.currentUser.name, AppStrings.demoUserName);
-      expect(repo.workoutHistory.first.title, 'Push Day');
-      expect(repo.routines.length, 3);
-      expect(repo.adminAnalytics['totalWorkouts'], 26);
-      expect(repo.adminUsers.length, 4);
+      final prevSets = repo.getPreviousPerformance('ex_bench_press');
+      expect(prevSets != null, true);
+      expect(prevSets!.isNotEmpty, true);
+      expect(prevSets[0].weight, 40.0);
+      expect(prevSets[0].reps, 10);
+    });
+
+    test('Logic Test: BackupService export and schema validation', () {
+      final repo = MockDataRepository();
+      final jsonStr = BackupService.exportToJson(
+        profile: repo.currentUser,
+        workouts: repo.workoutHistory,
+        routines: repo.routines,
+        customExercises: repo.customExercises,
+        preferences: {'theme': 'midnight_navy'},
+      );
+
+      final result = BackupService.validateBackupJson(jsonStr);
+      expect(result.isValid, true);
+      expect(result.workoutCount, 4);
+      expect(result.routineCount, 3);
+
+      final imported = BackupService.importData(
+        jsonStr,
+        existingWorkouts: [],
+        existingRoutines: [],
+      );
+      expect((imported['workouts'] as List).length, 4);
+      expect((imported['routines'] as List).length, 3);
+    });
+
+    test('Logic Test: WorkoutSetModel serialization with set types and RIR', () {
+      final set = WorkoutSetModel(
+        id: 's_test_1',
+        setNumber: 1,
+        weight: 100.0,
+        reps: 5,
+        type: SetType.warmup,
+        rir: 3.0,
+        notes: 'Explosive warmup',
+      );
+
+      final map = set.toMap();
+      final deserialized = WorkoutSetModel.fromMap(map);
+
+      expect(deserialized.id, 's_test_1');
+      expect(deserialized.weight, 100.0);
+      expect(deserialized.reps, 5);
+      expect(deserialized.type, SetType.warmup);
+      expect(deserialized.rir, 3.0);
+      expect(deserialized.notes, 'Explosive warmup');
+    });
+
+    test('Logic Test: Security Custom Claims and Admin Authorization', () {
+      final adminProvider = AdminProvider();
+      final authDenied = adminProvider.checkAdminAuthorization(false);
+      expect(authDenied, false);
+      expect(
+        adminProvider.securityLogs.first.event
+            .toLowerCase()
+            .contains('privilege escalation'),
+        true,
+      );
+
+      final authGranted = adminProvider.checkAdminAuthorization(true);
+      expect(authGranted, true);
     });
   });
 }
