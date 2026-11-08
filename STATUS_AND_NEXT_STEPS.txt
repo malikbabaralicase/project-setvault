@@ -1,0 +1,125 @@
+================================================================================
+SETVAULT – PROJECT STATUS & ROADMAP REPORT
+Date: November 8, 2026
+Project: SetVault (Your Workouts. Your Progress. Your Data.)
+Owners: Malik Babar Ali, Sadia Iqbal
+Repository: https://github.com/malikbabaralicase/project-setvault
+================================================================================
+
+--------------------------------------------------------------------------------
+PART 1: COMPLETED WORK (FOUNDATION, ARCHITECTURE & COMPLETE UI DEVELOPMENT)
+--------------------------------------------------------------------------------
+1. Project Initialization & Structure:
+   - Scaffolding: Flutter Android/cross-platform project (Package: com.setvault.setvault).
+   - Architecture: Clean, feature-first structure (core/, data/, features/).
+   - Exact Midnight Navy Design Tokens:
+     - Backgrounds: Deep Midnight Navy (#061326), Dark Navy (#091B35), Secondary Navy (#102747), Glass Blue (#15385E)
+     - Accents: Electric Blue (#287BFF), Bright Blue (#398DFF), Cyan (#52D8FF), Light Cyan (#8CEBFF)
+     - Text: Primary White (#FFFFFF), Secondary White (#D5E4F5), Muted Blue (#91A7C1), Disabled (#63758D)
+     - Glow & Borders: Glass Border rgba(120,190,255,0.25), Blue Glow rgba(40,123,255,0.35), Cyan Glow rgba(82,216,255,0.20)
+     - Status: Success (#38D996), Warning (#FFBE55), Error (#FF647C)
+
+2. Reusable Glassmorphism Components Created:
+   - GlassCard: Frosted glass blur (sigma 12), subtle borders, dark navy gradients, optional outer aura.
+   - GlassButton: Electric-to-bright blue gradients, glass secondary, outline variants, loading spinners.
+   - GlassInput: Translucent input fields, password reveal toggle, cyan focus glow.
+   - GlassStatCard: Metric cards with glass icon bubble, badge, and contrast typography.
+   - GlassSectionHeader: Section headers with trailing action links.
+   - GlassNavigationBar: Floating curved 5-tab bottom navigation with active electric blue indicator.
+   - CustomAppBar: Adaptive glass app bar.
+   - BackgroundScaffold: Ambient radial light meshes over deep midnight navy background.
+   - SetVaultLogo: Geometric vector barbell custom painter with glowing plates and typography.
+   - ExerciseThumbnail: Vector illustrations with muscle group badges.
+
+3. All 16 Application Screens Built (matching Gemini collage):
+   - Screen 1: Splash / Onboarding Screen (splash_screen.dart)
+   - Screen 2: Home Dashboard Screen (dashboard_screen.dart)
+   - Screen 3: Active Workout Screen (active_workout_screen.dart)
+   - Screen 4: Exercise Library Screen (exercise_library_screen.dart)
+   - Screen 5: Exercise Filter / Picker BottomSheet
+   - Screen 6: Exercise Details Screen (exercise_details_screen.dart)
+   - Screen 7: Workout Routines Screen (workout_routines_screen.dart)
+   - Screen 8: Create / Edit Routine Screen (create_routine_screen.dart)
+   - Screen 9: Workout History Screen (workout_history_screen.dart)
+   - Screen 10: Workout Details Screen (workout_details_screen.dart)
+   - Screen 11: Progress Dashboard Screen (progress_dashboard_screen.dart)
+   - Screen 12: Rest Timer Screen (rest_timer_screen.dart)
+   - Screen 13: Settings Screen (settings_screen.dart)
+   - Screen 14: Profile Screen (profile_screen.dart)
+   - Screen 15: Login Screen (login_screen.dart)
+   - Screen 16: Registration Screen (registration_screen.dart)
+   - Screen 17: Administrator Dashboard Screen (admin_dashboard_screen.dart)
+   - Screen 18: Main Navigation Container (main_navigation_screen.dart)
+
+4. Part 1 Commit:
+   - a6f3afb15f44611d7e23f939906a7946367dffe3 (pushed to origin/main).
+
+--------------------------------------------------------------------------------
+PART 2: COMPLETED WORK (FIREBASE BACKEND, FUNCTIONALITY, SECURITY AUDIT & APK)
+--------------------------------------------------------------------------------
+1. Firebase & Offline Dependencies:
+   - firebase_core: ^5.1.0
+   - firebase_auth: ^7.0.1
+   - cloud_firestore: ^7.1.0
+   - shared_preferences: ^2.5.6
+   - connectivity_plus: ^7.3.2
+   - uuid: ^4.6.0
+
+2. Services Implemented:
+   - FirebaseService (lib/core/services/firebase_service.dart):
+     Dual-mode engine. Enables Firestore offline persistence with unlimited cache. Gracefully falls back to local offline engine if Firebase credentials are not yet configured.
+   - AuthService (lib/core/services/auth_service.dart):
+     Full authentication suite including:
+     - Anonymous Authentication (zero-friction guest mode).
+     - Email & Password Signup and Login.
+     - Account Linking (upgrades anonymous accounts to permanent email credentials preserving existing workouts, routines, and logs without data loss).
+     - Password Reset and Account Deletion.
+     - Role-Based Access Control (RBAC) via Firebase Custom Claims (request.auth.token.admin == true).
+   - FirestoreService (lib/core/services/firestore_service.dart):
+     Implements user-owned Firestore hierarchy:
+       users/{uid}/profile/info
+       users/{uid}/workouts/{workoutId}/exercises/{exerciseId}/sets/{setId}
+       users/{uid}/routines/{routineId}/exercises/{exerciseId}
+       users/{uid}/customExercises/{exerciseId}
+       users/{uid}/settings/preferences
+     Complete CRUD, indexed date ordering, and subcollection management.
+   - WorkoutAutosaveService (lib/core/services/workout_autosave_service.dart):
+     Continuous background autosave for active workouts via SharedPreferences. Crash recovery on app restart.
+   - BackupService (lib/core/services/backup_service.dart):
+     Versioned (v1.0) JSON backup generator and validator. Includes schema validation, type checks, and duplicate-prevention importer.
+
+3. Workout Logging, Catalogue & Analytics:
+   - Unlimited sets with dynamic set types: Normal, Warm-up (W), Drop Set (D), Failure (F).
+   - Reps in Reserve (RIR) per set.
+   - Support for Weighted, Bodyweight, and Weighted-Bodyweight exercises.
+   - Dynamic Carry-over: queries real previous workout logs to display exact previous performance (e.g. 40 kg x 10 reps).
+   - Real-time sync status indicators: 'Saved Locally', 'Waiting for Sync', 'Synced', 'Sync Failed'.
+   - Complete 8-category exercise catalogue: Chest, Back, Shoulders, Biceps, Triceps, Legs, Core, Full Body.
+   - Custom exercise creation, editing, and deletion.
+   - Full routine builder with planned sets, target reps, planned weights, and reordering.
+   - Real progress analytics: Weekly volume spline curves, weight trend, and dynamically calculated Personal Records (PRs).
+
+4. Security Hardening & Audit:
+   - firestore.rules: Production security rules enforcing strict user isolation, authentication checks, and admin RBAC.
+   - SECURITY.md: Full 50-checkpoint security audit report covering all security domains.
+   - README.md: Comprehensive setup guide, Firebase integration instructions, and APK compilation manual.
+
+5. Testing & Verification:
+   - flutter analyze: Passed with 0 errors, 0 warnings, 0 lints.
+   - flutter test: Passed all 22/22 unit and widget tests.
+   - Android APK: Successfully built build\app\outputs\flutter-apk\app-debug.apk.
+
+6. Git Commits (Part 2):
+   - d86ab87: feat: integrate Firebase authentication and Firestore services
+   - ba1b97f: feat: add offline workout synchronization, carry-over and autosave
+   - b918ba0: feat: implement backup import export, catalogue and admin security
+   - f2475cc: security: implement firestore rules and security audit
+   - d6a67cd: test: add backend and security tests
+   - [Pending]: docs: finalize project documentation and status roadmap
+
+--------------------------------------------------------------------------------
+STATUS SUMMARY
+--------------------------------------------------------------------------------
+- Tasks Done: 100% of Part 1 and Part 2 specifications completed and verified.
+- Tasks Remaining: Final Git push to remote repository origin/main and final report presentation.
+================================================================================
