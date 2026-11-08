@@ -33,3 +33,4 @@ class AppStrings {
   static const String navProgress = 'Progress';
   static const String navSettings = 'Settings';
 }
+

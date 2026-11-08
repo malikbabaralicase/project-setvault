@@ -121,3 +121,4 @@ class ExerciseThumbnail extends StatelessWidget {
     );
   }
 }
+

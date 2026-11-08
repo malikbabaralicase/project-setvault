@@ -265,3 +265,4 @@ class _TimerRingPainter extends CustomPainter {
     return oldDelegate.progress != progress;
   }
 }
+

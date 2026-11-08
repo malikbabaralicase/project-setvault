@@ -101,3 +101,4 @@ class AppTypography {
     letterSpacing: 1.5,
   );
 }
+

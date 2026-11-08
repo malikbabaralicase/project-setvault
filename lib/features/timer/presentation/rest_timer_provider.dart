@@ -79,3 +79,4 @@ class RestTimerProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+

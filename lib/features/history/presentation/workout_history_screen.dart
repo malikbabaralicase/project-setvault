@@ -217,3 +217,4 @@ class WorkoutHistoryScreen extends StatelessWidget {
     );
   }
 }
+

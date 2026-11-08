@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
+import 'core/services/firebase_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/administration/presentation/admin_provider.dart';
 import 'features/authentication/presentation/auth_provider.dart';
@@ -15,8 +16,11 @@ import 'features/settings/presentation/settings_provider.dart';
 import 'features/timer/presentation/rest_timer_provider.dart';
 import 'features/workouts/presentation/active_workout_provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase and Firestore offline persistence
+  await FirebaseService().initialize();
 
   // Set system bar styles for deep midnight navy theme
   SystemChrome.setSystemUIOverlayStyle(

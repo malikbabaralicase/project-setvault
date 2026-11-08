@@ -25,3 +25,4 @@ class ProgressStatModel {
     required this.personalRecords,
   });
 }
+

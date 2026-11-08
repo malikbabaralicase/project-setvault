@@ -8,6 +8,7 @@ import '../../../core/widgets/custom_app_bar.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../core/widgets/glass_input.dart';
 import '../../../core/widgets/glass_section_header.dart';
+import '../../authentication/presentation/auth_provider.dart';
 import 'admin_provider.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
@@ -16,8 +17,11 @@ class AdminDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AdminProvider>();
+    final auth = context.watch<AuthProvider>();
+    final isAuthorized = auth.isAdmin;
     final analytics = provider.analytics;
     final users = provider.filteredUsers;
+    final securityLogs = provider.securityLogs;
 
     return BackgroundScaffold(
       appBar: const CustomAppBar(title: 'Administrator Dashboard'),
@@ -29,6 +33,43 @@ class AdminDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // RBAC Access Control Banner
+            if (!isAuthorized) ...[
+              GlassCard(
+                borderColor: AppColors.error,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.shield_outlined,
+                      color: AppColors.error,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Restricted Access',
+                            style: AppTypography.cardTitle.copyWith(
+                              color: AppColors.error,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Administrative privileges require verified Firebase token claims. Client-side privilege escalation is prohibited.',
+                            style: AppTypography.labelSmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             // Section 1: Backend Analytics
             const GlassSectionHeader(title: 'Backend Analytics'),
             const SizedBox(height: 6),
@@ -94,7 +135,52 @@ class AdminDashboardScreen extends StatelessWidget {
 
             const SizedBox(height: 22),
 
-            // Section 2: User Management
+            // Section 2: Security Monitoring
+            const GlassSectionHeader(title: 'Security Monitoring'),
+            const SizedBox(height: 6),
+            GlassCard(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: securityLogs.take(3).map((log) {
+                  final isInfo = log.severity == 'INFO';
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isInfo
+                              ? Icons.security_rounded
+                              : Icons.warning_amber_rounded,
+                          color: isInfo ? AppColors.cyan : AppColors.error,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            log.event,
+                            style: AppTypography.bodySmall.copyWith(
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          log.severity,
+                          style: AppTypography.labelSmall.copyWith(
+                            color: isInfo ? AppColors.cyan : AppColors.error,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            // Section 3: User Management
             GlassSectionHeader(
               title: 'User Management',
               actionText: 'View All',
@@ -110,7 +196,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Users List matching the collage
+            // Users List
             ...users.map((user) {
               return GlassCard(
                 margin: const EdgeInsets.only(bottom: 10),
