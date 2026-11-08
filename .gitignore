@@ -46,3 +46,10 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Android & Kotlin build cache
+.kotlin/
+android/.kotlin/
+*.apk
+google-services.json
+GoogleService-Info.plist
