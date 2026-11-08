@@ -38,9 +38,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   void _handleRegister() async {
     final authProvider = context.read<AuthProvider>();
+    final email = _usernameController.text.contains('@')
+        ? _usernameController.text
+        : '${_usernameController.text}@example.com';
     final success = await authProvider.register(
       name: _nameController.text,
-      username: _usernameController.text,
+      email: email,
       password: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,
     );
@@ -200,3 +203,4 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 }
+

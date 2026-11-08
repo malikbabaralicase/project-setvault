@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/background_scaffold.dart';
 import '../../../core/widgets/glass_button.dart';
 import '../../../core/widgets/setvault_logo.dart';
-import 'login_screen.dart';
 import '../../dashboard/presentation/main_navigation_screen.dart';
+import 'auth_provider.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,6 +47,21 @@ class _SplashScreenState extends State<SplashScreen>
     super.dispose();
   }
 
+  void _handleStartTraining() async {
+    final auth = context.read<AuthProvider>();
+    if (!auth.isAuthenticated) {
+      await auth.signInAnonymously();
+    }
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MainNavigationScreen(),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BackgroundScaffold(
@@ -61,7 +78,8 @@ class _SplashScreenState extends State<SplashScreen>
           ),
           // Content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -91,14 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Icons.play_arrow_rounded,
                           color: AppColors.primaryWhite,
                         ),
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MainNavigationScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: _handleStartTraining,
                       ),
                       const SizedBox(height: 14),
                       GlassButton(
@@ -116,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Version 1.0.0 • Architecture Phase',
+                        'Cloud Firestore • Offline Engine Active',
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.mutedBlue.withOpacity(0.6),
                         ),
@@ -144,11 +155,15 @@ class _GymSilhouettePainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Geometric grid lines representing gym training cage & equipment
-    canvas.drawLine(Offset(w * 0.15, h * 0.2), Offset(w * 0.15, h * 0.8), paint);
-    canvas.drawLine(Offset(w * 0.85, h * 0.2), Offset(w * 0.85, h * 0.8), paint);
-    canvas.drawLine(Offset(w * 0.1, h * 0.35), Offset(w * 0.9, h * 0.35), paint);
-    canvas.drawLine(Offset(w * 0.1, h * 0.65), Offset(w * 0.9, h * 0.65), paint);
+    // Geometric grid lines representing gym training equipment
+    canvas.drawLine(
+        Offset(w * 0.15, h * 0.2), Offset(w * 0.15, h * 0.8), paint);
+    canvas.drawLine(
+        Offset(w * 0.85, h * 0.2), Offset(w * 0.85, h * 0.8), paint);
+    canvas.drawLine(
+        Offset(w * 0.1, h * 0.35), Offset(w * 0.9, h * 0.35), paint);
+    canvas.drawLine(
+        Offset(w * 0.1, h * 0.65), Offset(w * 0.9, h * 0.65), paint);
   }
 
   @override
